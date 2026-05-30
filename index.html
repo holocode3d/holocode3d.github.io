@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HoloCode: A Code-Centric Multi-Agent Framework for Image-to-3D Scene Generation</title>
+  <link rel="icon" type="image/png" href="./static/img/favicon.png">
+
+  <meta name="description" content="HoloCode is a code-centric multi-agent framework for editable image-to-3D scene generation.">
+  <meta property="og:title" content="HoloCode: A Code-Centric Multi-Agent Framework for Image-to-3D Scene Generation">
+  <meta property="og:description" content="Executable Blender Python scene code for layout-first, editable image-to-3D scene generation.">
+  <meta property="og:image" content="./static/img/og-teaser.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="./static/img/og-teaser.png">
+
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet" href="./static/css/cupid-style.css">
+  <link rel="stylesheet" href="./static/css/holo.css">
+</head>
+
+<body>
+  <header class="header-wrapper holo-hero">
+    <div class="header-container" id="top">
+      <div class="header-content">
+        <h1><span class="brand-mark">HoloCode</span></h1>
+        <h2>A Code-Centric Multi-Agent Framework for Image-to-3D Scene Generation</h2>
+        <p>
+          HoloCode turns a single RGB image into an editable Blender scene by predicting executable layout code,
+          binding visible objects to 3D geometry, and refining the result from rendered feedback.
+        </p>
+
+        <div class="icon-container" aria-label="Key ideas">
+          <div class="icon-item">
+            <img src="./static/img/icons/formula.svg" alt="">
+            <div><strong>Executable scene state</strong>: object identities, locations, rotations, and scales are represented as Blender Python code.</div>
+          </div>
+          <div class="icon-item">
+            <img src="./static/img/icons/camera.svg" alt="">
+            <div><strong>Layout-first reasoning</strong>: the Arranger predicts a shared 3D layout before detailed mesh selection or generation.</div>
+          </div>
+          <div class="icon-item">
+            <img src="./static/img/icons/cube.svg" alt="">
+            <div><strong>Render-guided refinement</strong>: the Refiner edits code to correct floating objects, interpenetrations, scale, and view mismatches.</div>
+          </div>
+        </div>
+
+        <div class="button-container">
+          <a href="./static/paper.pdf" class="button paper-link" target="_blank" rel="noopener">
+            <span class="icon is-small"><i class="fas fa-file-pdf"></i></span>
+            <span>Paper</span>
+          </a>
+          <a href="#method" class="button paper-link">
+            <span class="icon is-small"><i class="fas fa-project-diagram"></i></span>
+            <span>Method</span>
+          </a>
+          <span class="button button-disabled" aria-disabled="true">
+            <span class="icon is-small"><i class="fas fa-code"></i></span>
+            <span>Code Coming Soon</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="header-image">
+        <img draggable="false" src="./static/img/teaser.png" alt="HoloCode overview teaser">
+      </div>
+    </div>
+  </header>
+
+  <div class="byline">
+    <div class="byline-container">
+      <div class="byline-column">
+        <h3>Affiliations</h3>
+        <p>
+          <a href="https://www.nus.edu.sg/" class="affiliation-link" target="_blank" rel="noopener">National University of Singapore</a>
+        </p>
+        <p>
+          <a href="https://www.microsoft.com/" class="affiliation-link" target="_blank" rel="noopener">Microsoft</a>
+        </p>
+      </div>
+      <div class="byline-column">
+        <h3>Status</h3>
+        <p><span class="status-pill">Preprint project page</span></p>
+      </div>
+    </div>
+  </div>
+
+  <main class="page-main">
+    <section class="section" aria-labelledby="teaser-title">
+      <h1 id="teaser-title" class="text">Teaser</h1>
+      <figure class="figure-block teaser-figure">
+        <img data-zoomable draggable="false" src="./static/img/teaser.png" alt="HoloCode generates editable 3D scenes from a single image through executable Blender Python code.">
+        <figcaption>
+          HoloCode generates 3D scenes from an image by predicting executable, object-centric Blender Python code.
+          Each <code>create</code> command imports a mesh asset and sets editable 3D transforms.
+        </figcaption>
+      </figure>
+      <div class="tldr">
+        <strong>TL;DR:</strong> HoloCode separates scene-level layout reasoning from object-level geometry, then keeps the whole result editable as executable Blender Python code.
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="abstract-title">
+      <h1 id="abstract-title" class="text">Abstract</h1>
+      <p class="text abstract">
+        Image-to-3D scene generation must recover both object geometry and plausible spatial relations. Common object-wise pipelines generate each object separately and then assemble the results, which can preserve local details but often leads to floating objects, interpenetrations, missing contacts, or implausible relative scales. HoloCode is a code-centric multi-agent framework that predicts executable Blender Python layout code from a single image and 2D localization cues. An Arranger Agent estimates object identities and 3D transforms, a Modeler Agent binds each object to retrieved or generated geometry, and a Refiner Agent renders the scene and edits the code from visual feedback. The code representation exposes object names, positions, rotations, and scales, making generated scenes interpretable and directly editable.
+      </p>
+    </section>
+
+    <section class="section" aria-labelledby="problem-title">
+      <h1 id="problem-title" class="text">Why Layout Code?</h1>
+      <p class="text">
+        Object-wise image-to-3D generation can produce plausible isolated meshes, but scene generation also requires support, contact, depth ordering, scale, and orientation to agree across all objects. HoloCode recovers these scene variables explicitly before binding detailed meshes.
+      </p>
+      <figure class="figure-block figure-scroll">
+        <img data-zoomable draggable="false" src="./static/img/sam3d-problem.png" alt="Object-wise 3D generation failures including floating objects and interpenetrations.">
+        <figcaption>
+          Object-wise assembly can create spatial conflicts. HoloCode reasons over all visible objects in a shared executable layout.
+        </figcaption>
+      </figure>
+    </section>
+
+    <section class="section" id="method" aria-labelledby="method-title">
+      <h1 id="method-title" class="text">Method</h1>
+      <p class="text">
+        HoloCode uses one executable scene representation across three stages. The Arranger predicts a layout script, the Modeler preserves that layout while binding meshes, and the Refiner renders the current scene and edits the code to fix residual visual-spatial errors.
+      </p>
+
+      <figure class="figure-block figure-scroll figure-scroll-wide">
+        <img data-zoomable draggable="false" src="./static/img/framework.png" alt="Overview of the HoloCode multi-agent inference pipeline.">
+        <figcaption>
+          Overview of the HoloCode multi-agent inference pipeline: layout programming, layout-preserving geometry binding, and render-guided code refinement.
+        </figcaption>
+      </figure>
+
+      <div class="agent-grid">
+        <article class="agent-card">
+          <div class="agent-label arranger">A</div>
+          <h3>Arranger</h3>
+          <p>Predicts object-level Blender Python layout code from the image and ordered 2D boxes.</p>
+        </article>
+        <article class="agent-card">
+          <div class="agent-label modeler">M</div>
+          <h3>Modeler</h3>
+          <p>Routes each object to asset retrieval or image-to-3D diffusion, while preserving the predicted transform.</p>
+        </article>
+        <article class="agent-card">
+          <div class="agent-label refiner">R</div>
+          <h3>Refiner</h3>
+          <p>Compares the input view with a render and edits locations, rotations, scales, and support relations in code.</p>
+        </article>
+      </div>
+
+      <div class="code-panel" aria-label="Example HoloCode scene representation">
+        <div class="code-panel-header">Executable scene representation</div>
+        <pre><code><span class="code-key">create</span>(name=<span class="code-string">"chair.glb"</span>, loc=(<span class="code-num">0.42</span>, <span class="code-num">-1.35</span>, <span class="code-num">0.48</span>),
+       rot=(<span class="code-num">0.0</span>, <span class="code-num">0.0</span>, <span class="code-num">-0.71</span>), scale=(<span class="code-num">0.82</span>, <span class="code-num">0.80</span>, <span class="code-num">0.96</span>))
+
+<span class="code-key">create</span>(name=<span class="code-string">"table.glb"</span>, loc=(<span class="code-num">0.05</span>, <span class="code-num">-1.10</span>, <span class="code-num">0.76</span>),
+       rot=(<span class="code-num">0.0</span>, <span class="code-num">0.0</span>, <span class="code-num">0.02</span>), scale=(<span class="code-num">1.44</span>, <span class="code-num">0.82</span>, <span class="code-num">0.74</span>))</code></pre>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="gallery-title">
+      <h1 id="gallery-title" class="text">Interactive 3D Visualization</h1>
+      <p class="text">
+        This gallery contains only HoloCode outputs. The meshes are simplified for web interaction; the full-resolution assets are kept offline.
+      </p>
+      <div id="holocode-gallery-viewer" class="interactive-shell">
+        <div class="interactive-toolbar">
+          <div>
+            <h2 data-viewer-title>HoloCode result</h2>
+            <p data-viewer-description>Loading scene metadata.</p>
+          </div>
+          <button data-viewer-reset class="interactive-reset" type="button">
+            <span class="icon is-small"><i class="fas fa-crosshairs"></i></span>
+            Reset View
+          </button>
+        </div>
+        <div class="interactive-layout">
+          <aside class="interactive-sidebar" aria-label="HoloCode result list">
+            <div data-viewer-scenes class="interactive-thumbs"></div>
+          </aside>
+          <div class="interactive-main">
+            <div data-viewer-methods class="interactive-methods" aria-label="Method selector"></div>
+            <div class="interactive-canvas-wrap">
+              <canvas data-viewer-canvas class="interactive-canvas"></canvas>
+            </div>
+            <div data-viewer-status class="interactive-status">Preparing viewer.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="training-title">
+      <h1 id="training-title" class="text">Training</h1>
+      <p class="text">
+        HoloCode builds Blender Python code datasets from SAGE and 3D-FRONT annotations. Supervised fine-tuning teaches valid code generation, while GRPO rewards executable syntax and spatial alignment through mean 3D IoU and thresholded object accuracy.
+      </p>
+      <div class="metric-grid">
+        <article class="metric-card">
+          <h3>Executable Format</h3>
+          <p>Rewards scripts whose <code>create</code> calls can be parsed and executed by the restricted evaluator.</p>
+        </article>
+        <article class="metric-card">
+          <h3>Spatial Alignment</h3>
+          <p>Scores oriented 3D boxes derived from <code>loc</code>, <code>rot</code>, and <code>scale</code>.</p>
+        </article>
+        <article class="metric-card">
+          <h3>Render Feedback</h3>
+          <p>Supervises code repair from imperfect scripts and rendered views, aligning visual mismatches with code edits.</p>
+        </article>
+      </div>
+      <figure class="figure-block figure-scroll">
+        <img data-zoomable draggable="false" src="./static/img/train-reward.png" alt="Training reward curve for HoloCode.">
+        <figcaption>
+          GRPO optimization improves task-level spatial rewards beyond token-level code imitation.
+        </figcaption>
+      </figure>
+    </section>
+
+    <section class="section" aria-labelledby="results-title">
+      <h1 id="results-title" class="text">Results</h1>
+      <p class="text">
+        Experiments evaluate both 3D layout estimation and complete image-to-3D scene generation. HoloCode improves spatial plausibility while preserving object-level fidelity, especially in scenes where independent object assembly struggles with global consistency.
+      </p>
+      <div class="results-stack">
+        <figure class="figure-block figure-scroll figure-scroll-wide">
+          <img data-zoomable draggable="false" src="./static/img/qualitative.png" alt="Qualitative HoloCode results on SAGE and 3D-FRONT.">
+          <figcaption>
+            Qualitative visualization on SAGE and 3D-FRONT for layout estimation and image-to-3D scene generation.
+          </figcaption>
+        </figure>
+        <figure class="figure-block figure-scroll figure-scroll-wide">
+          <img data-zoomable draggable="false" src="./static/img/ood.png" alt="Out-of-domain qualitative HoloCode results.">
+          <figcaption>
+            Cross-domain examples show that executable layout code can generalize beyond the training domains.
+          </figcaption>
+        </figure>
+        <figure class="figure-block figure-scroll figure-scroll-wide">
+          <img data-zoomable draggable="false" src="./static/img/refiner.png" alt="Render-guided Refiner examples for HoloCode.">
+          <figcaption>
+            The Refiner corrects residual layout errors by editing the executable scene code from rendered feedback.
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="editing-title">
+      <h1 id="editing-title" class="text">Code-Centric Editing</h1>
+      <p class="text">
+        Because every object remains a line of executable code, downstream edits can be localized: deleting, copying, moving, rotating, or resizing a target object does not require regenerating the whole scene.
+      </p>
+      <figure class="figure-block figure-scroll">
+        <img data-zoomable draggable="false" src="./static/img/editing.png" alt="Code-centric 3D scene editing examples.">
+        <figcaption>
+          Code-centric 3D scene editing by modifying object-level commands while preserving unrelated objects.
+        </figcaption>
+      </figure>
+    </section>
+
+    <footer class="footer-note">
+      Project page template adapted from <a href="https://cupid3d.github.io/" target="_blank" rel="noopener">Cupid</a>.
+      Page content currently lists affiliations only.
+    </footer>
+  </main>
+
+  <script src="./static/js/medium-zoom.min.js"></script>
+  <script>
+    if (window.mediumZoom) {
+      mediumZoom("[data-zoomable]", {
+        margin: 64,
+        background: "#ffffffee"
+      });
+    }
+  </script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./static/interactive/vendor/three.module.js"
+      }
+    }
+  </script>
+  <script type="module" src="./static/interactive/js/viewer.js?v=20260530-floor-align-box"></script>
+</body>
+</html>
